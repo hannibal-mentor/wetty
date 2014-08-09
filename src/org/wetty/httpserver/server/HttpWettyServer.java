@@ -4,7 +4,11 @@
  */
 package org.wetty.httpserver.server;
 
+import org.hibernate.Session;
+import org.hibernate.SessionFactory;
+import org.hibernate.Transaction;
 import org.wetty.httpserver.controllers.ControllerManager;
+import org.wetty.httpserver.utils.HibernateUtil;
 import org.wetty.httpserver.utils.statistics.SimpleStatistics;
 import org.wetty.httpserver.utils.statistics.Statistics;
 import org.wetty.httpserver.views.ViewBuilder;
@@ -26,6 +30,7 @@ public class HttpWettyServer {
 	static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "9443" : "9090"));
 
 	public static void main(String[] args) throws Exception {
+		
 		// Configure SSL.
 		final SslContext sslCtx;
 		if (SSL) {
