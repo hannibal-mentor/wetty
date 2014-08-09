@@ -9,6 +9,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.wetty.httpserver.controllers.ControllerManager;
 import org.wetty.httpserver.utils.HibernateUtil;
+import org.wetty.httpserver.utils.statistics.NoStatistics;
 import org.wetty.httpserver.utils.statistics.SimpleStatistics;
 import org.wetty.httpserver.utils.statistics.Statistics;
 import org.wetty.httpserver.views.ViewBuilder;

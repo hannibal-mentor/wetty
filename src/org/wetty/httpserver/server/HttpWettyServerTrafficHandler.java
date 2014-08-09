@@ -11,6 +11,13 @@ import io.netty.handler.traffic.TrafficCounter;
 public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler implements ChannelGatherable {
 
 	@Override
+	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+		// TODO Auto-generated method stub
+		super.channelUnregistered(ctx);
+		//TODO: Gather accumulated statistics to optimize write speed, number of requests
+	}
+
+	@Override
 	public void write(ChannelHandlerContext ctx, Object msg,
 			ChannelPromise promise) throws Exception {
 
@@ -21,7 +28,8 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 
 	@Override
 	protected void doAccounting(TrafficCounter counter) {
-		super.doAccounting(counter); //NOOP		
+		super.doAccounting(counter); //NOOP
+		//TODO: count avg speed
 	}
 
 	public HttpWettyServerTrafficHandler(long checkInterval) {

@@ -6,4 +6,5 @@ import io.netty.handler.traffic.TrafficCounter;
 public interface Statistics {
 	public void gatherFromTrafficCounter(Channel channel, TrafficCounter trafficCounter);
 	public void gatherFromChannel(Channel channel);
+	public void gatherRedirect(Channel channel, String url);
 }
