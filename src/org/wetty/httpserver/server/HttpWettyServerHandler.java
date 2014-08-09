@@ -93,7 +93,8 @@ import static io.netty.handler.codec.http.HttpVersion.*;
             	System.out.println("Channel "+ctx.channel().toString()+" registered."); 
             	             	
             	HttpRequest request = this.request = (HttpRequest) msg;
-                //TODO: parse HTTP-request (msg), get view and return HTTP-response
+                
+            	//TODO: parse HTTP-request (msg), get view and return HTTP-response
                 
                 if (is100ContinueExpected(request)) {
                     send100Continue(ctx);

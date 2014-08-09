@@ -5,10 +5,23 @@ import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 
 public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler implements ChannelGatherable {
+
+	@Override
+	public void channelRead(ChannelHandlerContext ctx, Object msg)
+			throws Exception {
+		super.channelRead(ctx, msg);
+		
+		 if (msg instanceof HttpRequest) {
+         	HttpRequest request = (HttpRequest) msg;
+         	
+         	//TODO: synchronously write request.getUri() and reset counter
+		 }
+	}
 
 	@Override
 	public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
