@@ -11,6 +11,7 @@ import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
+import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.DecoderResult;
@@ -99,6 +100,19 @@ import static io.netty.handler.codec.http.HttpVersion.*;
                 if (is100ContinueExpected(request)) {
                     send100Continue(ctx);
                 }
+                
+                //TODO Refactor
+                //Setting URI for statistics
+                for (Entry<String, ChannelHandler> handler: ctx.channel().pipeline()) {
+                	if (handler.getValue() instanceof HttpWettyServerTrafficHandler) {
+                		
+                		HttpWettyServerTrafficHandler trafficHandler = (HttpWettyServerTrafficHandler) handler.getValue();
+                		synchronized (trafficHandler) {
+                			trafficHandler.setUrl(request.getUri());
+                		}
+                		break;
+                	}
+                }                
     
                 buf.setLength(0);
                 buf.append("WELCOME TO THE ").append(Version.name()).append(" ").append(Version.version()).append("\r\n");
@@ -217,6 +231,8 @@ import static io.netty.handler.codec.http.HttpVersion.*;
             // Write the response.
             ctx.write(response);
     
+            //
+            
             return keepAlive;
         }
     

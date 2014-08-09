@@ -5,22 +5,20 @@ import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelPromise;
-import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 
 public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler implements ChannelGatherable {
 
-	@Override
-	public void channelRead(ChannelHandlerContext ctx, Object msg)
-			throws Exception {
-		super.channelRead(ctx, msg);
-		
-		 if (msg instanceof HttpRequest) {
-         	HttpRequest request = (HttpRequest) msg;
-         	
-         	//TODO: synchronously write request.getUri() and reset counter
-		 }
+	private StringBuilder url = new StringBuilder();
+	
+	public StringBuilder getUrl() {
+		return url;
+	}
+
+	public void setUrl(String url) {
+		this.url = new StringBuilder();
+ 		this.url.append(url);
 	}
 
 	@Override
@@ -28,6 +26,7 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		// TODO Auto-generated method stub
 		super.channelUnregistered(ctx);
 		//TODO: Gather accumulated statistics to optimize write speed, number of requests
+		gatherStatistics(ctx.channel());
 	}
 
 	@Override
@@ -35,7 +34,7 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 			ChannelPromise promise) throws Exception {
 
 		super.write(ctx, msg, promise);	
-		gatherStatistics(ctx.channel());
+		//gatherStatistics(ctx.channel());
 
 	}
 
@@ -52,7 +51,7 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 	@Override
 	public void read(ChannelHandlerContext ctx) {
 		super.read(ctx);
-		gatherStatistics(ctx.channel());
+		//gatherStatistics(ctx.channel());
 	}
 
 	@Override
@@ -74,9 +73,10 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		TrafficCounter counter = trafficCounter();
 		
 		if (channel.parent() instanceof HttpWettyServerChannel) {
-			((HttpWettyServerChannel) channel.parent()).getStatistics().gatherFromTrafficCounter(channel, counter);
+			((HttpWettyServerChannel) channel.parent()).getStatistics().gatherFromTrafficCounter(channel, counter, this.url.toString());
 		}		
 		
+		trafficCounter().resetCumulativeTime();
 	}
 
 

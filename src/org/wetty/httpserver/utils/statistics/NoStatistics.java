@@ -7,7 +7,7 @@ public class NoStatistics implements Statistics {
 
 	@Override
 	public void gatherFromTrafficCounter(Channel channel,
-			TrafficCounter trafficCounter) {
+			TrafficCounter trafficCounter, String url) {
 		// Nope
 		
 	}

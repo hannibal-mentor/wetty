@@ -17,7 +17,7 @@ import io.netty.channel.Channel;
 import io.netty.handler.traffic.TrafficCounter;
 
 public class SimpleStatistics implements Statistics {
-	public synchronized void write(Channel channel, TrafficCounter trafficCounter) {
+	public synchronized void write(Channel channel, TrafficCounter trafficCounter, String url) {
 						
 				SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		        Session session = sessionFactory.getCurrentSession();
@@ -42,10 +42,10 @@ public class SimpleStatistics implements Statistics {
 	}
 
 	@Override
-	public void gatherFromTrafficCounter(Channel channel, TrafficCounter trafficCounter) {
-		System.out.println(channel.remoteAddress().toString() + ", written: "+ trafficCounter.cumulativeWrittenBytes());
-		System.out.println(channel.remoteAddress().toString() + ", read: "+ trafficCounter.cumulativeReadBytes());
-		write(channel, trafficCounter);
+	public void gatherFromTrafficCounter(Channel channel, TrafficCounter trafficCounter, String url) {
+		System.out.println(url + ", written: "+ trafficCounter.cumulativeWrittenBytes());
+		System.out.println(url + ", read: "+ trafficCounter.cumulativeReadBytes());
+		write(channel, trafficCounter, url);
 	}
 
 	@Override

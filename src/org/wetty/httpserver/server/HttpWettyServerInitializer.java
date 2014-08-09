@@ -29,10 +29,12 @@ public class HttpWettyServerInitializer extends ChannelInitializer<SocketChannel
 			p.addLast(sslCtx.newHandler(ch.alloc()));
 		}
 		
-		p.addLast(new HttpWettyServerTrafficHandler(checkInterval));
+		HttpWettyServerTrafficHandler trafficHandler = new HttpWettyServerTrafficHandler(checkInterval);
+		
+		p.addLast(trafficHandler);
 		
 		p.addLast(new HttpRequestDecoder());
-
+		
 		p.addLast(new HttpResponseEncoder());
 
 		//automatic content compression.
