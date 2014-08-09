@@ -1,7 +1,7 @@
     /*
      * Based on Netty examples
      */
-package org.wetty.httpserver.server;
+package org.wetty.httpserver.client;
 
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.Channel;
@@ -19,6 +19,8 @@ import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.InsecureTrustManagerFactory;
 
 import java.net.URI;
+
+import org.wetty.httpserver.server.HttpWettyServer;
 
 /**
  * A simple HTTP client that prints out the content of the HTTP response to

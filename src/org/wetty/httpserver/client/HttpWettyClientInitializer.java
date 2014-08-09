@@ -1,7 +1,7 @@
     /*
      * Based on Netty examples
      */
-package org.wetty.httpserver.server;
+package org.wetty.httpserver.client;
 
 import io.netty.channel.ChannelInitializer;
 import io.netty.channel.ChannelPipeline;
