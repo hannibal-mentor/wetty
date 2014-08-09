@@ -5,6 +5,7 @@
 package org.wetty.httpserver.server;
     
 
+import org.wetty.httpserver.controllers.ControllerManager;
 import org.wetty.httpserver.utils.Version;
 
 import io.netty.buffer.ByteBuf;
@@ -35,6 +36,7 @@ import java.util.Set;
 
 import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 import org.wetty.httpserver.utils.statistics.ChannelHolder;
+import org.wetty.httpserver.views.ViewBuilder;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpHeaders.*;
@@ -91,67 +93,47 @@ import static io.netty.handler.codec.http.HttpVersion.*;
 						
             if (msg instanceof HttpRequest) {
             	
-            	System.out.println("Channel "+ctx.channel().toString()+" registered."); 
-            	             	
             	HttpRequest request = this.request = (HttpRequest) msg;
                 
-            	//TODO: parse HTTP-request (msg), get view and return HTTP-response
-                
-                if (is100ContinueExpected(request)) {
-                    send100Continue(ctx);
-                }
-                
-                //TODO Refactor
+            	//TODO Refactor
                 //Setting URI for statistics
                 for (Entry<String, ChannelHandler> handler: ctx.channel().pipeline()) {
                 	if (handler.getValue() instanceof HttpWettyServerTrafficHandler) {
                 		
                 		HttpWettyServerTrafficHandler trafficHandler = (HttpWettyServerTrafficHandler) handler.getValue();
                 		synchronized (trafficHandler) {
-                			trafficHandler.setUrl(request.getUri());
+                			trafficHandler.setUrl(getHost(request, "unknown") + request.getUri());
                 		}
                 		break;
                 	}
-                }                
-    
-                buf.setLength(0);
-                buf.append("WELCOME TO THE ").append(Version.name()).append(" ").append(Version.version()).append("\r\n");
-                buf.append("===================================\r\n");
-    
-                buf.append("ACTIVE CONNECTIONS: ").append(ChannelHolder.size()).append("\r\n");
-                buf.append("VERSION: ").append(request.getProtocolVersion()).append("\r\n");
-                buf.append("HOSTNAME: ").append(getHost(request, "unknown")).append("\r\n");
-                buf.append("REQUEST_URI: ").append(request.getUri()).append("\r\n\r\n");
-    
-                HttpHeaders headers = request.headers();
-                if (!headers.isEmpty()) {
-                    for (Map.Entry<String, String> h: headers) {
-                        String key = h.getKey();
-                        String value = h.getValue();
-                        buf.append("HEADER: ").append(key).append(" = ").append(value).append("\r\n");
-                    }
-                    buf.append("\r\n");
-                }
-    
-                QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
-                Map<String, List<String>> params = queryStringDecoder.parameters();
-                if (!params.isEmpty()) {
-                    for (Entry<String, List<String>> p: params.entrySet()) {
-                        String key = p.getKey();
-                        List<String> vals = p.getValue();
-                        for (String val : vals) {
-                            buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
-                        }
-                    }
-                    buf.append("\r\n");
-                }
-    
-                appendDecoderResult(buf, request);
+                }          
+                
+                if (ctx.channel().parent() instanceof HttpWettyServerChannel) {
+            		
+            		HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) ctx.channel().parent();
+            		ControllerManager controllerManager = serverChannel.getControllerManager();
+            		ViewBuilder viewBuilder = serverChannel.getViewBuilder();
+            		
+            		//TODO: parse HTTP-request (msg), get view and return HTTP-response
+            		
+                    buf.setLength(0);
+                    buf.append((String) controllerManager.getView(viewBuilder, ctx, request));
+                   
+                    appendDecoderResult(buf, request);
+            	}
             }
     
             if (msg instanceof HttpContent) {
                 HttpContent httpContent = (HttpContent) msg;
     
+//                if (ctx.channel().parent() instanceof HttpWettyServerChannel) {
+//                	
+//                	HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) ctx.channel().parent();
+//            		ControllerManager controllerManager = serverChannel.getControllerManager();
+//            		ViewBuilder viewBuilder = serverChannel.getViewBuilder();
+//                }
+                
+                //TODO: Move to ViewBuilder
                 ByteBuf content = httpContent.content();
                 if (content.isReadable()) {
                     buf.append("CONTENT: ");
@@ -231,20 +213,14 @@ import static io.netty.handler.codec.http.HttpVersion.*;
             // Write the response.
             ctx.write(response);
     
-            //
-            
             return keepAlive;
         }
     
-        private static void send100Continue(ChannelHandlerContext ctx) {
-            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, CONTINUE);
-            ctx.write(response);
-        }
+       
   
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
           cause.printStackTrace();
-          System.out.println("Channel "+ctx.channel()+" unregistered.");
           ctx.close();
           
           gatherStatistics(ctx.channel());

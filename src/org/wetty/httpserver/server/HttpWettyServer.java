@@ -32,6 +32,10 @@ public class HttpWettyServer {
 
 	public static void main(String[] args) throws Exception {
 		
+		//Initialize Hibernate connection pool
+		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
+        Session session = sessionFactory.getCurrentSession();
+		
 		// Configure SSL.
 		final SslContext sslCtx;
 		if (SSL) {
@@ -68,6 +72,8 @@ public class HttpWettyServer {
 		} finally {
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
+			
+			sessionFactory.close();
 		}
 	}
 }

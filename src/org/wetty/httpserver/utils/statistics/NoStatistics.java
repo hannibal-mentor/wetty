@@ -19,7 +19,7 @@ public class NoStatistics implements Statistics {
 	}
 
 	@Override
-	public void gatherRedirect(Channel channel, String url) {
+	public void gatherRedirect(String url) {
 		// Nope
 		
 	}

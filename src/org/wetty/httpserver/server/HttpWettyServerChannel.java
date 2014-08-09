@@ -58,8 +58,4 @@ public class HttpWettyServerChannel extends NioServerSocketChannel{
 		return viewBuilder;
 	}
 
-	//TODO: remove
-	public void me() {
-		System.out.println("It's me");
-	}
 }
