@@ -91,11 +91,7 @@ import static io.netty.handler.codec.http.HttpVersion.*;
             if (msg instanceof HttpRequest) {
             	
             	System.out.println("Channel "+ctx.channel().toString()+" registered."); 
-            	//TODO: Store remote port
-                //System.out.println(ctx.channel().remoteAddress());
-                //String host = ((InetSocketAddress)ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress();
-                //int port = ((InetSocketAddress)ctx.getChannel().getRemoteAddress()).getPort();
-                            	
+            	             	
             	HttpRequest request = this.request = (HttpRequest) msg;
                 //TODO: parse HTTP-request (msg), get view and return HTTP-response
                 

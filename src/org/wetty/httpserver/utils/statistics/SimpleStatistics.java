@@ -21,6 +21,11 @@ public class SimpleStatistics implements Statistics {
 
 	@Override
 	public void gatherFromChannel(Channel channel) {
+		//TODO: Store remote port
+        //System.out.println(ctx.channel().remoteAddress());
+        //String host = ((InetSocketAddress)ctx.getChannel().getRemoteAddress()).getAddress().getHostAddress();
+        //int port = ((InetSocketAddress)ctx.getChannel().getRemoteAddress()).getPort();
+		
 		if (channel.isActive()) {
 			System.out.println("Channel is active "+channel.toString());
 			ChannelHolder.add(channel);

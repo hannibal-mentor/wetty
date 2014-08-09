@@ -1,5 +1,6 @@
 /*
  * Based on Netty examples
+ * All settings should be set here
  */
 package org.wetty.httpserver.server;
 
@@ -19,8 +20,8 @@ import io.netty.handler.ssl.util.SelfSignedCertificate;
 
 public class HttpWettyServer {
 
-	//TODO: add counter object here?
-
+	private static final long CHECKINTERVAL = 1000;
+	
 	static final boolean SSL = System.getProperty("ssl") != null;
 	static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "9443" : "9090"));
 
@@ -40,13 +41,13 @@ public class HttpWettyServer {
 		try {
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup)
-			//.channel(NioServerSocketChannel.class)
 			.channel(HttpWettyServerChannel.class)
 			.handler(new LoggingHandler(LogLevel.INFO))
-			.childHandler(new HttpWettyServerInitializer(sslCtx));
+			.childHandler(new HttpWettyServerInitializer(sslCtx, CHECKINTERVAL));
 
 			Channel ch = b.bind(PORT).sync().channel();
 
+			//Setting model, view, controller, statistics and request-response handler implementations
 			if (ch instanceof HttpWettyServerChannel) {
 				((HttpWettyServerChannel) ch).setStatistics((Statistics) new SimpleStatistics());
 				((HttpWettyServerChannel) ch).setRequestHandler((RequestHandler) new HttpWettyServerRequestHandler());
@@ -56,11 +57,6 @@ public class HttpWettyServer {
 			
 			System.err.println("Open your web browser and navigate to " +
 					(SSL? "https" : "http") + "://127.0.0.1:" + PORT + '/');
-
-			//TODO: Bind model, view, controller, statistics and request-response handler implementations
-			//TODO: initialize statistics handler
-			//TODO: initialize view handler
-			//SimpleStatistics, HttpWettyServerRequestHandler
 
 			ch.closeFuture().sync();
 		} finally {

@@ -14,9 +14,11 @@ import io.netty.handler.ssl.SslContext;
 public class HttpWettyServerInitializer extends ChannelInitializer<SocketChannel> {
 
 	private final SslContext sslCtx;
+	private final long checkInterval;
 
-	public HttpWettyServerInitializer(SslContext sslCtx) {
+	public HttpWettyServerInitializer(SslContext sslCtx, long checkInterval) {
 		this.sslCtx = sslCtx;
+		this.checkInterval = checkInterval;
 	}
 
 	@Override
@@ -33,7 +35,6 @@ public class HttpWettyServerInitializer extends ChannelInitializer<SocketChannel
 		//automatic content compression.
 		p.addLast(new HttpContentCompressor());
 
-		long checkInterval = 1000;
 		p.addLast(new HttpWettyServerTrafficHandler(checkInterval));
 
 		p.addLast(new HttpWettyServerHandler());
