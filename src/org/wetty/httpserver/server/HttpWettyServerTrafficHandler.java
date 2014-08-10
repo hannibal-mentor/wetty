@@ -39,6 +39,7 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 	@Override
 	protected void doAccounting(TrafficCounter counter) {
 		super.doAccounting(counter); //NOOP
+
 	}
 
 	public HttpWettyServerTrafficHandler(long checkInterval) {
@@ -56,35 +57,6 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		return super.trafficCounter();	
 	}
 
-	private String tcInfo() {
-		TrafficCounter counter = trafficCounter();
-		
-		StringBuilder sb = new StringBuilder();
-		
-		sb.append("TC Info: ")
-		.append("Check interval = ")
-		.append(counter.checkInterval()).append(", ")
-		.append("lastReadThroughput = ")
-		.append(counter.lastReadThroughput()).append(", ")
-		.append("lastWriteThroughput = ")
-		.append(counter.lastWriteThroughput()).append(", ")
-		.append("currentReadBytes = ")
-		.append(counter.currentReadBytes()).append(", ")
-		.append("currentWrittenBytes = ")
-		.append(counter.currentWrittenBytes()).append(", ")
-		.append("cumulativeReadBytes = ")
-		.append(counter.cumulativeReadBytes()).append(", ")
-		.append("cumulativeWrittenBytes = ")
-		.append(counter.cumulativeWrittenBytes()).append(", ")
-		.append("lastTime = ")
-		.append(counter.lastTime()).append(", ")
-		.append("lastCumulativeTime = ")
-		.append(counter.lastCumulativeTime()).append(", ")
-		;
-		
-		return sb.toString();
-	}
-	
 	@Override
 	public void gatherStatistics(Channel channel) {
 		TrafficCounter counter = trafficCounter();
@@ -92,7 +64,6 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		synchronized (counter) {
 			if (channel.parent() instanceof HttpWettyServerChannel) {
 				((HttpWettyServerChannel) channel.parent()).getStatistics().gatherFromTrafficCounter(channel, counter, this.url.toString());
-				counter.resetCumulativeTime();
 			}		
 		}
 		

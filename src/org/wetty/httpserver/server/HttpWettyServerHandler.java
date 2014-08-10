@@ -242,7 +242,8 @@ public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> 
 
 	@Override
 	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		cause.printStackTrace();
+		//cause.printStackTrace();
+		
 		ctx.close();
 
 		gatherStatistics(ctx.channel());

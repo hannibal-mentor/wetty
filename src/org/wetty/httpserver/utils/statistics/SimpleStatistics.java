@@ -25,9 +25,13 @@ public class SimpleStatistics implements Statistics {
 		
 		synchronized (sessionFactory) {
 			
-			double speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes()) * MILISECONDS_IN_SECOND
-						/ (trafficCounter.lastTime() - trafficCounter.lastCumulativeTime());
-			System.out.println(speed);
+			double speed = 0;
+			long interval = trafficCounter.lastTime() - trafficCounter.lastCumulativeTime();
+			if (interval > 0) {
+				speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes())
+						/ interval * MILISECONDS_IN_SECOND;
+			} 
+			
 			try {
 				sessionFactory.getCurrentSession().beginTransaction();
 	
