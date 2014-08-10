@@ -69,10 +69,10 @@ public class HttpWettyServer {
 
 			ch.closeFuture().sync();
 		} finally {
+			sessionFactory.close();
+			
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
-
-			sessionFactory.close();
 		}
 	}
 }

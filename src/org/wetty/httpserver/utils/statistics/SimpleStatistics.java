@@ -33,7 +33,8 @@ public class SimpleStatistics implements Statistics {
 						.setLong(4,  trafficCounter.lastReadThroughput() + trafficCounter.lastWriteThroughput()); //why long?
 								;
 	
-						query.executeUpdate();
+						@SuppressWarnings("unused")
+						int result = query.executeUpdate();
 						sessionFactory.getCurrentSession().getTransaction().commit();
 			}
 			catch (RuntimeException e) {
@@ -76,7 +77,8 @@ public class SimpleStatistics implements Statistics {
 			Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Redirects (url) VALUES (?);")
 					.setString(0, url);
 
-			query.executeUpdate();
+			@SuppressWarnings("unused")
+			int result = query.executeUpdate();
 			sessionFactory.getCurrentSession().getTransaction().commit();
 		}
 		catch (RuntimeException e) {

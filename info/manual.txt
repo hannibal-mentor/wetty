@@ -9,5 +9,8 @@ Building:
 1. mvn install clean
 
 Running:
-1. put the statistics.db sqlite db in the wetty folder in .\resources\ folder.
+1. put the statistics.db in the %wetty_folder%\resources\ folder.
 2. run "java -jar wetty.jar"
+
+Shutting down server:
+- either press Ctrl+C from terminal session or kill the corresponding javaw.exe process from task manager

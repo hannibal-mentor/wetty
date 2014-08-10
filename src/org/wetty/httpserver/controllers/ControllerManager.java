@@ -65,6 +65,7 @@ public class ControllerManager {
 						HttpWettyServerHandler.send100(ctx);
 		            }
 					return v.processStatus(msg);
+					
 			default:
 					HttpWettyServerHandler.send404(ctx);
 		            return v.error404(msg);
@@ -77,9 +78,4 @@ public class ControllerManager {
 		}
 	}
 
-
-	public void setResponse(HttpRequest request, ChannelHandlerContext ctx) {
-		// TODO Auto-generated method stub
-		
-	}
 }
