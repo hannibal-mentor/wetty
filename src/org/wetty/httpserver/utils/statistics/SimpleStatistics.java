@@ -9,9 +9,7 @@ import java.math.BigInteger;
 import java.net.InetSocketAddress;
 
 import org.hibernate.Query;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.wetty.httpserver.utils.HibernateUtil;
 
 import io.netty.channel.Channel;
@@ -24,9 +22,8 @@ public class SimpleStatistics implements Statistics {
 		
 		synchronized (sessionFactory) {
 			
-		
 			try {
-				Transaction tx = sessionFactory.getCurrentSession().beginTransaction();
+				sessionFactory.getCurrentSession().beginTransaction();
 	
 				Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Requests (uri, src_ip, sent_bytes, received_bytes, speed) VALUES (?,?,?,?,?);")
 						.setString(0, url)
@@ -36,7 +33,7 @@ public class SimpleStatistics implements Statistics {
 						.setLong(4,  trafficCounter.lastReadThroughput() + trafficCounter.lastWriteThroughput()); //why long?
 								;
 	
-						int result = query.executeUpdate();
+						query.executeUpdate();
 						sessionFactory.getCurrentSession().getTransaction().commit();
 			}
 			catch (RuntimeException e) {
@@ -79,8 +76,7 @@ public class SimpleStatistics implements Statistics {
 			Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Redirects (url) VALUES (?);")
 					.setString(0, url);
 
-			int result = query.executeUpdate();
-
+			query.executeUpdate();
 			sessionFactory.getCurrentSession().getTransaction().commit();
 		}
 		catch (RuntimeException e) {

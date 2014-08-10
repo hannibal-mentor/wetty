@@ -3,9 +3,7 @@ package org.wetty.httpserver.utils.statistics;
 import java.util.List;
 
 import org.hibernate.Query;
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
 import org.wetty.httpserver.utils.HibernateUtil;
 
 public class StatisticsReader {
@@ -29,7 +27,7 @@ public class StatisticsReader {
 	}
 	
 	public List<Object> getRequestDetails() {
-		return getResultList("SELECT src_ip as IP, count(*) as request_count, max(timestamp) as last_request_time "+
+		return getResultList("SELECT src_ip as IP, count(*) as request_count, max(datetime(timestamp,'localtime')) as last_request_time "+
 				"from Requests GROUP BY src_ip;");
 	}
 	
@@ -38,7 +36,7 @@ public class StatisticsReader {
 	}
 	
 	public List<Object> getLastConnections() {
-		return getResultList("SELECT src_ip, uri, sent_bytes, received_bytes, speed from Requests order by id DESC LIMIT 16;");
+		return getResultList("SELECT src_ip, uri, datetime(timestamp,'localtime'), sent_bytes, received_bytes, speed from Requests order by id DESC LIMIT 16;");
 	}
 	
 	@SuppressWarnings("unchecked")

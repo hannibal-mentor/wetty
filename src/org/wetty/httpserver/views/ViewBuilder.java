@@ -1,13 +1,9 @@
 package org.wetty.httpserver.views;
 
 import static io.netty.handler.codec.http.HttpHeaders.getHost;
-import io.netty.handler.codec.http.HttpHeaders;
 import io.netty.handler.codec.http.HttpRequest;
-import io.netty.handler.codec.http.QueryStringDecoder;
 
 import java.util.List;
-import java.util.Map;
-import java.util.Map.Entry;
 
 import org.wetty.httpserver.utils.Version;
 import org.wetty.httpserver.utils.statistics.ChannelHolder;
@@ -24,7 +20,7 @@ public class ViewBuilder {
 	public Object error404(Object msg) {
 		//TODO: send 404 header
 		if (msg instanceof HttpRequest) {
-			HttpRequest request = ((HttpRequest) msg);
+			//HttpRequest request = ((HttpRequest) msg);
 			
 		}
 		
@@ -34,7 +30,7 @@ public class ViewBuilder {
 	public Object processHello(Object msg) {
 		
 		if (msg instanceof HttpRequest) {
-			HttpRequest request = ((HttpRequest) msg);
+			//HttpRequest request = ((HttpRequest) msg);
 			
 			try {
 				Thread.sleep(10000);
@@ -42,8 +38,6 @@ public class ViewBuilder {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
-			
-			String url = request.getUri();
 			
 			StringBuilder buf = new StringBuilder(); 
 			buf.append("\"Hello World\"");
@@ -56,9 +50,7 @@ public class ViewBuilder {
 
 	public Object processRedirect(Object msg) {
 		if (msg instanceof HttpRequest) {
-			HttpRequest request = ((HttpRequest) msg);
-			
-			String url = request.getUri();
+			//HttpRequest request = ((HttpRequest) msg);
 			
 			StringBuilder buf = new StringBuilder(); 
 	        return buf.toString();
@@ -73,8 +65,6 @@ public class ViewBuilder {
 		if (msg instanceof HttpRequest) {
 			HttpRequest request = ((HttpRequest) msg);
 			
-			String url = request.getUri();
-			
 			StringBuilder buf = new StringBuilder(); 
 			buf.append("WELCOME TO THE ").append(Version.name()).append(" ").append(Version.version()).append("\r\n");
 	        buf.append("===================================\r\n");
@@ -84,78 +74,42 @@ public class ViewBuilder {
 	        buf.append("HOSTNAME: ").append(getHost(request, "unknown")).append("\r\n");
 	        buf.append("REQUEST_URI: ").append(request.getUri()).append("\r\n\r\n");
 	
-	        //TODO: Show, refactor
 	        StatisticsReader sr = new StatisticsReader();
-	        List<Object> collection = sr.getAllRequests();
-	        
-	        for (Object obj: collection) {
-	        	buf.append("TOTAL REQUESTS: ").append(obj.toString()).append("\r\n");
-	        }
-	        
-	        collection = sr.getRedirects();
-	        buf.append("REDIRECTS:").append("\r\n");
-	        for (Object obj: collection) {
-	        	buf.append("ROW:");
-	        	for (Object rowObj: (Object [])obj) {
-	        		buf.append(rowObj).append("|");
-	        	};
-	        	buf.append("\r\n");
-	        }
-	        
-	        collection = sr.getUniqueRequestsGroupedByIP();
-	        buf.append("UNIQUE REQUESTS BY ID:").append("\r\n");
-	        for (Object obj: collection) {
-	        	buf.append("ROW:");
-	        	for (Object rowObj: (Object [])obj) {
-	        		buf.append(rowObj).append("|");
-	        	};
-	        	buf.append("\r\n");
-	        }
-	        
-	        collection = sr.getRequestDetails();
-	        buf.append("REQUEST DETAILS:").append("\r\n");
-	        for (Object obj: collection) {
-	        	buf.append("ROW:");
-	        	for (Object rowObj: (Object [])obj) {
-	        		buf.append(rowObj).append("|");
-	        	};
-	        	buf.append("\r\n");
-	        }
-	        
-	        collection = sr.getLastConnections();
-	        buf.append("LAST 16 CONNECTIONS:").append("\r\n");
-	        for (Object obj: collection) {
-	        	buf.append("ROW:");
-	        	for (Object rowObj: (Object [])obj) {
-	        		buf.append(rowObj).append("|");
-	        	};
-	        	buf.append("\r\n");
-	        } 
-	        
-	        HttpHeaders headers = request.headers();
-	        if (!headers.isEmpty()) {
-	            for (Map.Entry<String, String> h: headers) {
-	                String key = h.getKey();
-	                String value = h.getValue();
-	                buf.append("HEADER: ").append(key).append(" = ").append(value).append("\r\n");
-	            }
-	            buf.append("\r\n");
-	        }
-	
-	        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
-	        Map<String, List<String>> params = queryStringDecoder.parameters();
-	        if (!params.isEmpty()) {
-	            for (Entry<String, List<String>> p: params.entrySet()) {
-	                String key = p.getKey();
-	                List<String> vals = p.getValue();
-	                for (String val : vals) {
-	                    buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
-	                }
-	            }
-	            buf.append("\r\n");
-	        }
+	        appendOneColumnSection(buf, sr.getAllRequests(), "TOTAL REQUESTS: ", new String[]{"#", "url", "number"});
+		       
+	        appendSection(buf, sr.getRedirects(), "REDIRECTS:", new String[]{"#", "url", "number"});
+	        appendSection(buf, sr.getUniqueRequestsGroupedByIP(), "UNIQUE REQUESTS BY ID:", new String[]{"#", "url", "number"});
+	        appendSection(buf, sr.getRequestDetails(), "REQUEST DETAILS:", new String[]{"#", "url", "number"});	        
+	        appendSection(buf, sr.getLastConnections(), "LAST 16 CONNECTIONS:", new String[]{"#", "url", "number"});
+		        
 	        return buf.toString();
 		}
 	        else return def(msg);
+	}
+
+	public void appendSection(StringBuilder buf, List<Object> collection, String header, String [] firstRow) {
+		int rowCounter = 0;
+		
+		buf.append(header).append("\r\n");
+		
+		for (String element: firstRow) {
+			buf.append(element).append("|");
+		}
+		buf.append("\r\n");
+		
+		for (Object obj: collection) {
+			buf.append(++rowCounter).append("|");
+			for (Object rowObj: (Object [])obj) {
+				buf.append(rowObj).append("|");
+			};
+			buf.append("\r\n");
+		}
+		buf.append("\r\n");
+	}
+	
+	public void appendOneColumnSection(StringBuilder buf, List<Object> collection, String header, String [] firstRow) {
+		for (Object obj: collection) {
+        	buf.append(header).append(obj.toString()).append("\r\n\r\n");
+        }
 	}
 }

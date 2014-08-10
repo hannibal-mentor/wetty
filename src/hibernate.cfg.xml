@@ -16,7 +16,7 @@
 	    <property name="hibernate.connection.autocommit">false</property> 
         <property name="hibernate.current_session_context_class">thread</property>
  		<property name="hibernate.connection.isolation">1</property>
- 		<property name="connection.pool_size">10</property>
+ 		<property name="connection.pool_size">20</property>
  		<property name="hibernate.connection.release_mode">after_transaction</property>
  		
  		<property name="hibernate.c3p0.min_size">5</property>
@@ -28,6 +28,5 @@
     	<property name="maxActive">1</property>
     	<property name="maxIdle">1</property>
     	<property name="poolPreparedStatements">true</property>
-        <!--  <mapping class="com.journaldev.hibernate.model.Employee"/> -->
     </session-factory>
 </hibernate-configuration>
