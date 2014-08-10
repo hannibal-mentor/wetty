@@ -6,7 +6,7 @@ Requirements:
 4. JAVA_PATH should be set.
 
 Building:
-1. mvn install clean
+1. mvn clean install
 
 Running:
 1. put the statistics.db in the %wetty_folder%\resources\ folder.
