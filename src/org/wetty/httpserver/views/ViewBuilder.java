@@ -78,10 +78,10 @@ public class ViewBuilder {
 	        appendOneColumnSection(buf, sr.getAllRequests(), "TOTAL REQUESTS: ", new String[]{"#", "url", "number"});
 		       
 	        appendSection(buf, sr.getRedirects(), "REDIRECTS:", new String[]{"#", "url", "number"});
-	        appendSection(buf, sr.getUniqueRequestsGroupedByIP(), "UNIQUE REQUESTS BY ID:", new String[]{"#", "url", "number"});
-	        appendSection(buf, sr.getRequestDetails(), "REQUEST DETAILS:", new String[]{"#", "url", "number"});	        
-	        appendSection(buf, sr.getLastConnections(), "LAST 16 CONNECTIONS:", new String[]{"#", "url", "number"});
-		        
+	        appendSection(buf, sr.getUniqueRequestsGroupedByIP(), "UNIQUE REQUESTS BY ID:", new String[]{"#", "IP", "number"});
+	        appendSection(buf, sr.getRequestDetails(), "REQUEST DETAILS:", new String[]{"#", "IP", "request_count", "last_request_time"});	        
+	        appendSection(buf, sr.getLastConnections(), "LAST 16 CONNECTIONS:", new String[]{"#", "src_ip", "uri", "timestamp", "sent_bytes", "received_bytes", "speed"});
+
 	        return buf.toString();
 		}
 	        else return def(msg);

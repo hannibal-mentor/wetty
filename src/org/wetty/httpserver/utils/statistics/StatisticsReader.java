@@ -23,7 +23,7 @@ public class StatisticsReader {
 	}
 
 	public List<Object> getUniqueRequestsGroupedByIP() {
-		return getResultList("SELECT src_ip as IP, count(DISTINCT src_ip) from Requests GROUP BY src_ip;");
+		return getResultList("SELECT src_ip as IP, count(DISTINCT src_ip) as number from Requests GROUP BY src_ip;");
 	}
 	
 	public List<Object> getRequestDetails() {
