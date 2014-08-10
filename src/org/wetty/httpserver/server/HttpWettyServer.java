@@ -9,6 +9,7 @@ import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
 import org.wetty.httpserver.controllers.ControllerManager;
 import org.wetty.httpserver.utils.HibernateUtil;
+import org.wetty.httpserver.utils.statistics.NoSessionStatistics;
 import org.wetty.httpserver.utils.statistics.NoStatistics;
 import org.wetty.httpserver.utils.statistics.SimpleStatistics;
 import org.wetty.httpserver.utils.statistics.Statistics;
@@ -46,7 +47,7 @@ public class HttpWettyServer {
 		}
 
 		// Configure the server.
-		EventLoopGroup bossGroup = new NioEventLoopGroup(1);
+		EventLoopGroup bossGroup = new NioEventLoopGroup(100);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
 			ServerBootstrap b = new ServerBootstrap();

@@ -28,6 +28,7 @@ public class SQLiteDialect extends Dialect {
     registerColumnType(Types.LONGVARCHAR, "longvarchar");
     registerColumnType(Types.DATE, "date");
     registerColumnType(Types.TIME, "time");
+    //Unparseable date: "2014-08-10 07:37:05"
     registerColumnType(Types.TIMESTAMP, "datetime");
     registerColumnType(Types.BINARY, "blob");
     registerColumnType(Types.VARBINARY, "blob");
@@ -35,6 +36,8 @@ public class SQLiteDialect extends Dialect {
     registerColumnType(Types.BLOB, "blob");
     registerColumnType(Types.CLOB, "clob");
     registerColumnType(Types.BOOLEAN, "boolean");
+    registerColumnType(Types.NULL, "null");
+    registerHibernateType(Types.NULL, "null");
 
     //registerFunction( "abs", new StandardSQLFunction("abs") );
     registerFunction( "concat", new VarArgsSQLFunction(StandardBasicTypes.STRING, "", "||", "") );

@@ -2,7 +2,7 @@ package org.wetty.httpserver.utils;
 
 public final class Version {
 	public static String version() {
-		return "0.0.2";
+		return "0.1.0";
 	}
 	
 	public static String name() {

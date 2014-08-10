@@ -11,6 +11,7 @@ import java.util.Map.Entry;
 
 import org.wetty.httpserver.utils.Version;
 import org.wetty.httpserver.utils.statistics.ChannelHolder;
+import org.wetty.httpserver.utils.statistics.StatisticsReader;
 
 public class ViewBuilder {
 	//TODO:
@@ -54,45 +55,12 @@ public class ViewBuilder {
 
 
 	public Object processRedirect(Object msg) {
-		//TODO: Gather redirect statistics
-		//TODO: Send 302 header
-		
 		if (msg instanceof HttpRequest) {
 			HttpRequest request = ((HttpRequest) msg);
 			
 			String url = request.getUri();
 			
 			StringBuilder buf = new StringBuilder(); 
-			buf.append("WELCOME TO THE ").append(Version.name()).append(" ").append(Version.version()).append("\r\n");
-	        buf.append("===================================\r\n");
-	
-	        buf.append("ACTIVE CONNECTIONS: ").append(ChannelHolder.size()).append("\r\n");
-	        buf.append("VERSION: ").append(request.getProtocolVersion()).append("\r\n");
-	        buf.append("HOSTNAME: ").append(getHost(request, "unknown")).append("\r\n");
-	        buf.append("REQUEST_URI: ").append(request.getUri()).append("\r\n\r\n");
-	
-	        HttpHeaders headers = request.headers();
-	        if (!headers.isEmpty()) {
-	            for (Map.Entry<String, String> h: headers) {
-	                String key = h.getKey();
-	                String value = h.getValue();
-	                buf.append("HEADER: ").append(key).append(" = ").append(value).append("\r\n");
-	            }
-	            buf.append("\r\n");
-	        }
-	
-	        QueryStringDecoder queryStringDecoder = new QueryStringDecoder(request.getUri());
-	        Map<String, List<String>> params = queryStringDecoder.parameters();
-	        if (!params.isEmpty()) {
-	            for (Entry<String, List<String>> p: params.entrySet()) {
-	                String key = p.getKey();
-	                List<String> vals = p.getValue();
-	                for (String val : vals) {
-	                    buf.append("PARAM: ").append(key).append(" = ").append(val).append("\r\n");
-	                }
-	            }
-	            buf.append("\r\n");
-	        }
 	        return buf.toString();
 		}
 	        else return def(msg);
@@ -116,6 +84,54 @@ public class ViewBuilder {
 	        buf.append("HOSTNAME: ").append(getHost(request, "unknown")).append("\r\n");
 	        buf.append("REQUEST_URI: ").append(request.getUri()).append("\r\n\r\n");
 	
+	        //TODO: Show, refactor
+	        StatisticsReader sr = new StatisticsReader();
+	        List<Object> collection = sr.getAllRequests();
+	        
+	        for (Object obj: collection) {
+	        	buf.append("TOTAL REQUESTS: ").append(obj.toString()).append("\r\n");
+	        }
+	        
+	        collection = sr.getRedirects();
+	        buf.append("REDIRECTS:").append("\r\n");
+	        for (Object obj: collection) {
+	        	buf.append("ROW:");
+	        	for (Object rowObj: (Object [])obj) {
+	        		buf.append(rowObj).append("|");
+	        	};
+	        	buf.append("\r\n");
+	        }
+	        
+	        collection = sr.getUniqueRequestsGroupedByIP();
+	        buf.append("UNIQUE REQUESTS BY ID:").append("\r\n");
+	        for (Object obj: collection) {
+	        	buf.append("ROW:");
+	        	for (Object rowObj: (Object [])obj) {
+	        		buf.append(rowObj).append("|");
+	        	};
+	        	buf.append("\r\n");
+	        }
+	        
+	        collection = sr.getRequestDetails();
+	        buf.append("REQUEST DETAILS:").append("\r\n");
+	        for (Object obj: collection) {
+	        	buf.append("ROW:");
+	        	for (Object rowObj: (Object [])obj) {
+	        		buf.append(rowObj).append("|");
+	        	};
+	        	buf.append("\r\n");
+	        }
+	        
+	        collection = sr.getLastConnections();
+	        buf.append("LAST 16 CONNECTIONS:").append("\r\n");
+	        for (Object obj: collection) {
+	        	buf.append("ROW:");
+	        	for (Object rowObj: (Object [])obj) {
+	        		buf.append(rowObj).append("|");
+	        	};
+	        	buf.append("\r\n");
+	        } 
+	        
 	        HttpHeaders headers = request.headers();
 	        if (!headers.isEmpty()) {
 	            for (Map.Entry<String, String> h: headers) {

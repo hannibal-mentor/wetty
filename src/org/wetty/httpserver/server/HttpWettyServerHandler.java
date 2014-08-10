@@ -36,6 +36,7 @@ import java.util.Set;
 
 import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 import org.wetty.httpserver.utils.statistics.ChannelHolder;
+import org.wetty.httpserver.utils.statistics.Statistics;
 import org.wetty.httpserver.views.ViewBuilder;
 
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
@@ -43,7 +44,7 @@ import static io.netty.handler.codec.http.HttpHeaders.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
     
-    public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> implements ChannelGatherable {
+public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> implements ChannelGatherable {
     
         @Override
 		public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -217,6 +218,33 @@ import static io.netty.handler.codec.http.HttpVersion.*;
         }
     
        
+    public static void send404(ChannelHandlerContext ctx) {
+   		 FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST);
+            ctx.write(response);
+   	}
+
+    public static void send100(ChannelHandlerContext ctx) {
+            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, CONTINUE);
+            ctx.write(response);
+        }
+    
+    public static void send200(ChannelHandlerContext ctx) {
+        FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
+        ctx.write(response);
+    }
+   	 
+   	public static void send302(ChannelHandlerContext ctx, String redirect) {
+   		 Channel channel = ctx.channel(); 
+
+   		 if (channel.parent() instanceof HttpWettyServerChannel) {    		
+        		Statistics statistics = ((HttpWettyServerChannel) ctx.channel().parent()).getStatistics();
+        		statistics.gatherRedirect(redirect);
+        	 }
+   		 
+            FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, MOVED_PERMANENTLY);
+            response.headers().set(LOCATION, redirect);
+            ctx.write(response);
+        }
   
       @Override
       public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
