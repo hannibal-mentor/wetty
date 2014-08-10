@@ -13,20 +13,17 @@ public class ViewBuilder {
 	//TODO:
 	//private Object dataModel;
 	
+	//default page
 	public Object def(Object msg) {
 		return "DEFAULT PAGE VIEW";
 	}
 	
+	//404 page
 	public Object error404(Object msg) {
-		//TODO: send 404 header
-		if (msg instanceof HttpRequest) {
-			//HttpRequest request = ((HttpRequest) msg);
-			
-		}
-		
 		return "404 PAGE VIEW";
 	}
 
+	//page for /hello request
 	public Object processHello(Object msg) {
 		
 		if (msg instanceof HttpRequest) {
@@ -40,14 +37,14 @@ public class ViewBuilder {
 			}
 			
 			StringBuilder buf = new StringBuilder(); 
-			buf.append("\"Hello World\"");
+			buf.append("\"Hello World\"\r\n");
 			
 	        return buf.toString();
 		}
 	        else return def(msg);    	
 	}
 
-
+	//page for /redirect request
 	public Object processRedirect(Object msg) {
 		if (msg instanceof HttpRequest) {
 			//HttpRequest request = ((HttpRequest) msg);
@@ -57,10 +54,10 @@ public class ViewBuilder {
 		}
 	        else return def(msg);
 	}
-
 	
+	//page for /status request
 	public Object processStatus(Object msg) {
-		//TODO: print status page and get results from SQLite db
+		//print status page and get results from SQLite db
 		
 		if (msg instanceof HttpRequest) {
 			HttpRequest request = ((HttpRequest) msg);

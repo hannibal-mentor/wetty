@@ -1,0 +1,13 @@
+Requirements:
+
+1. JRE 1.7+.
+2. JDK 1.7+ (only for building).
+3. Maven (only for building).
+4. JAVA_PATH should be set.
+
+Building:
+1. mvn install clean
+
+Running:
+1. put the statistics.db sqlite db in the wetty folder in .\resources\ folder.
+2. run "java -jar wetty.jar"
