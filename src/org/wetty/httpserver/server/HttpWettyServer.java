@@ -10,7 +10,7 @@ import org.wetty.httpserver.controllers.ControllerManager;
 import org.wetty.httpserver.utils.HibernateUtil;
 import org.wetty.httpserver.utils.statistics.SimpleStatistics;
 import org.wetty.httpserver.utils.statistics.Statistics;
-import org.wetty.httpserver.views.ViewBuilder;
+import org.wetty.httpserver.views.HTMLViewBuilder;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
@@ -59,9 +59,7 @@ public class HttpWettyServer {
 			//Setting model, view, controller, statistics and request-response handler implementations
 			if (ch instanceof HttpWettyServerChannel) {
 				((HttpWettyServerChannel) ch).setStatistics((Statistics) new SimpleStatistics());
-				((HttpWettyServerChannel) ch).setRequestHandler((RequestHandler) new HttpWettyServerRequestHandler());
-				((HttpWettyServerChannel) ch).setControllerManager(new ControllerManager());
-				((HttpWettyServerChannel) ch).setViewBuilder(new ViewBuilder());
+				((HttpWettyServerChannel) ch).setControllerManager(new ControllerManager(new HTMLViewBuilder()));
 			}
 
 			System.err.println("Open your web browser and navigate to " +

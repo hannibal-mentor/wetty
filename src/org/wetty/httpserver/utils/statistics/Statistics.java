@@ -7,4 +7,5 @@ public interface Statistics {
 	public void gatherFromTrafficCounter(Channel channel, TrafficCounter trafficCounter, String url);
 	public void gatherFromChannel(Channel channel);
 	public void gatherRedirect(String url);
+	public void setChannelParameters(Channel channel, Object msg);
 }

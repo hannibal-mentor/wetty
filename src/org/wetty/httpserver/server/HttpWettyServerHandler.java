@@ -4,13 +4,14 @@
 
 package org.wetty.httpserver.server;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import org.wetty.httpserver.controllers.ControllerManager;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
-import io.netty.channel.ChannelHandler;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.SimpleChannelInboundHandler;
 import io.netty.handler.codec.DecoderResult;
@@ -26,19 +27,30 @@ import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.ServerCookieEncoder;
 import io.netty.util.CharsetUtil;
 
-import java.util.Map.Entry;
 import java.util.Set;
 
 import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 import org.wetty.httpserver.utils.statistics.Statistics;
-import org.wetty.httpserver.views.ViewBuilder;
-
 import static io.netty.handler.codec.http.HttpHeaders.Names.*;
 import static io.netty.handler.codec.http.HttpHeaders.*;
 import static io.netty.handler.codec.http.HttpResponseStatus.*;
 import static io.netty.handler.codec.http.HttpVersion.*;
 
 public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> implements ChannelGatherable {
+
+	private final StringBuilder buf = new StringBuilder();
+	private HttpRequest request;
+
+	//demonstrating reflection
+	private Class<? extends HttpWettyServerChannel> serverChannelClass = HttpWettyServerChannel.class;
+
+	public void setServerChannelClass(Class<? extends HttpWettyServerChannel> serverChannelClass) {
+		this.serverChannelClass = serverChannelClass;
+	}
+
+	public Class<? extends HttpWettyServerChannel> getServerChannelClass() {
+		return serverChannelClass;
+	}
 
 	@Override
 	public void channelActive(ChannelHandlerContext ctx) throws Exception {
@@ -51,10 +63,6 @@ public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> 
 		super.channelInactive(ctx);
 		gatherStatistics(ctx.channel());
 	}
-
-	private HttpRequest request;
-
-	private final StringBuilder buf = new StringBuilder();
 
 	@Override
 	public void channelReadComplete(ChannelHandlerContext ctx) {
@@ -70,9 +78,10 @@ public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> 
 
 	@Override
 	public void gatherStatistics(Channel channel) {
-		if (channel.parent() instanceof HttpWettyServerChannel) {
-			((HttpWettyServerChannel) channel.parent()).getStatistics().gatherFromChannel(channel);
-		}			
+		HttpWettyServerChannel serverChannel = getParentServerChannel(channel);
+		if (serverChannel != null) {   
+			serverChannel.getStatistics().gatherFromChannel(channel);
+		}		
 	}
 
 	@Override
@@ -82,79 +91,132 @@ public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> 
 		gatherStatistics(ctx.channel());		
 	}
 
+	//	@Override
+	//	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
+	//		Channel channel = ctx.channel();
+	//		gatherStatistics(channel);
+	//
+	//		//Initializing statistics request parameters parameters on channel read and handling the request	
+	//		HttpWettyServerChannel serverChannel = getParentServerChannel(channel);
+	//		
+	//		if (serverChannel != null) {    		
+	//
+	//			ControllerManager controllerManager = serverChannel.getControllerManager();
+	//
+	//			if (msg instanceof HttpRequest) {
+	//				Statistics statistics = serverChannel.getStatistics();
+	//				statistics.setChannelParameters(channel, msg);
+	//
+	//				//clean buffer
+	//				//buf.setLength(0);	
+	//			}
+	//			
+	//			if (msg instanceof HttpContent || msg instanceof HttpRequest) {
+	//				//buf.append((String) controllerManager.getView(ctx, msg, buf));
+	//				controllerManager.getView(ctx, msg);
+	//			}
+	//		}
+	//	}
+
+	//getting parent server channel with viewbuilder, controllermanager and statistics
+	//could be overriden
+	public HttpWettyServerChannel getParentServerChannel(Channel channel) {
+		//by default HttpWettyServerChannel serverChannel = HttpWettyServerChannel.getParentServerChannel(channel);
+
+		Method method = null;
+		try {
+			method = serverChannelClass.getMethod("getParentServerChannel", Channel.class);
+		} catch (NoSuchMethodException e) {
+			e.printStackTrace(); //let's just leave it
+		} catch (SecurityException e) {
+			e.printStackTrace(); //let's just leave it
+		}
+		HttpWettyServerChannel serverChannel = null;
+		try {
+			serverChannel = (HttpWettyServerChannel) method.invoke(null, channel);
+		} catch (IllegalAccessException e) {
+			e.printStackTrace(); //let's just leave it
+		} catch (IllegalArgumentException e) {
+			e.printStackTrace(); //let's just leave it
+		} catch (InvocationTargetException e) {
+			e.printStackTrace(); //let's just leave it
+		}
+		return serverChannel;
+	}
+
+	@Override
+	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
+		//cause.printStackTrace(); //We will not print this to stack
+		ctx.close();
+		gatherStatistics(ctx.channel());
+	}
+
 	@Override
 	protected void channelRead0(ChannelHandlerContext ctx, Object msg) {
-		gatherStatistics(ctx.channel());
+		Channel channel = ctx.channel();
+		gatherStatistics(channel);
 
-		if (msg instanceof HttpRequest) {
+		//Initializing statistics request parameters parameters on channel read and handling the request	
+		HttpWettyServerChannel serverChannel = getParentServerChannel(channel);
 
-			HttpRequest request = this.request = (HttpRequest) msg;
+		if (serverChannel != null) {    		
 
-			//TODO Refactor
-			//Setting URI for statistics
-			for (Entry<String, ChannelHandler> handler: ctx.channel().pipeline()) {
-				if (handler.getValue() instanceof HttpWettyServerTrafficHandler) {
+			ControllerManager controllerManager = serverChannel.getControllerManager();
 
-					HttpWettyServerTrafficHandler trafficHandler = (HttpWettyServerTrafficHandler) handler.getValue();
-					synchronized (trafficHandler) {
-						trafficHandler.setUrl(getHost(request, "unknown") + request.getUri());
-					}
-					break;
+			if (msg instanceof HttpRequest) {
+				Statistics statistics = serverChannel.getStatistics();
+				statistics.setChannelParameters(channel, msg);
+			}
+
+			if (msg instanceof HttpRequest) {
+
+				HttpRequest request = this.request = (HttpRequest) msg;
+
+				Statistics statistics = serverChannel.getStatistics();
+				statistics.setChannelParameters(channel, msg);
+
+				if (ctx.channel().parent() instanceof HttpWettyServerChannel) {
+
+					//TODO: parse HTTP-request (msg), get view and return HTTP-response
+
+					buf.setLength(0);
+					buf.append((String) controllerManager.getView(ctx, request));
+
+					appendDecoderResult(buf, request);
 				}
-			}          
-
-			if (ctx.channel().parent() instanceof HttpWettyServerChannel) {
-
-				HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) ctx.channel().parent();
-				ControllerManager controllerManager = serverChannel.getControllerManager();
-				ViewBuilder viewBuilder = serverChannel.getViewBuilder();
-
-				//TODO: parse HTTP-request (msg), get view and return HTTP-response
-
-				buf.setLength(0);
-				buf.append((String) controllerManager.getView(viewBuilder, ctx, request));
-
-				appendDecoderResult(buf, request);
-			}
-		}
-
-		if (msg instanceof HttpContent) {
-			HttpContent httpContent = (HttpContent) msg;
-
-			//                if (ctx.channel().parent() instanceof HttpWettyServerChannel) {
-			//                	
-			//                	HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) ctx.channel().parent();
-			//            		ControllerManager controllerManager = serverChannel.getControllerManager();
-			//            		ViewBuilder viewBuilder = serverChannel.getViewBuilder();
-			//                }
-
-			//TODO: Move to ViewBuilder
-			ByteBuf content = httpContent.content();
-			if (content.isReadable()) {
-				buf.append("CONTENT: ");
-				buf.append(content.toString(CharsetUtil.UTF_8));
-				buf.append("\r\n");
-				appendDecoderResult(buf, request);
 			}
 
-			if (msg instanceof LastHttpContent) {
-				buf.append("END OF CONTENT\r\n");
+			if (msg instanceof HttpContent) {
+				HttpContent httpContent = (HttpContent) msg;
 
-				LastHttpContent trailer = (LastHttpContent) msg;
-				if (!trailer.trailingHeaders().isEmpty()) {
+				//TODO: Move to ViewBuilder
+				ByteBuf content = httpContent.content();
+				if (content.isReadable()) {
+					buf.append("CONTENT: ");
+					buf.append(content.toString(CharsetUtil.UTF_8));
 					buf.append("\r\n");
-					for (String name: trailer.trailingHeaders().names()) {
-						for (String value: trailer.trailingHeaders().getAll(name)) {
-							buf.append("TRAILING HEADER: ");
-							buf.append(name).append(" = ").append(value).append("\r\n");
+					appendDecoderResult(buf, request);
+				}
+
+				if (msg instanceof LastHttpContent) {
+					buf.append("END OF CONTENT\r\n");
+
+					LastHttpContent trailer = (LastHttpContent) msg;
+					if (!trailer.trailingHeaders().isEmpty()) {
+						buf.append("\r\n");
+						for (String name: trailer.trailingHeaders().names()) {
+							for (String value: trailer.trailingHeaders().getAll(name)) {
+								buf.append("TRAILING HEADER: ");
+								buf.append(name).append(" = ").append(value).append("\r\n");
+							}
 						}
+						buf.append("\r\n");
 					}
-					buf.append("\r\n");
-				}
 
-				if (!writeResponse(trailer, ctx)) {
-					// If keep-alive is off, close the connection once the content is fully written.
-					ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+					if (!writeResponse(trailer, ctx)) {
+						// If keep-alive is off, close the connection once the content is fully written.
+						ctx.writeAndFlush(Unpooled.EMPTY_BUFFER).addListener(ChannelFutureListener.CLOSE);
+					}
 				}
 			}
 		}
@@ -209,44 +271,6 @@ public class HttpWettyServerHandler extends SimpleChannelInboundHandler<Object> 
 		ctx.write(response);
 
 		return keepAlive;
-	}
-
-
-	public static void send404(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST);
-		ctx.write(response);
-	}
-
-	public static void send100(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, CONTINUE);
-		ctx.write(response);
-	}
-
-	public static void send200(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, OK);
-		ctx.write(response);
-	}
-
-	public static void send302(ChannelHandlerContext ctx, String redirect) {
-		Channel channel = ctx.channel(); 
-
-		if (channel.parent() instanceof HttpWettyServerChannel) {    		
-			Statistics statistics = ((HttpWettyServerChannel) ctx.channel().parent()).getStatistics();
-			statistics.gatherRedirect(redirect);
-		}
-
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, MOVED_PERMANENTLY);
-		response.headers().set(LOCATION, redirect);
-		ctx.write(response);
-	}
-
-	@Override
-	public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-		//cause.printStackTrace();
-		
-		ctx.close();
-
-		gatherStatistics(ctx.channel());
 	}
 
 }

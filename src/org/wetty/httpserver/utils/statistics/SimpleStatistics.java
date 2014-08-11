@@ -5,32 +5,33 @@
  */
 package org.wetty.httpserver.utils.statistics;
 
+import static io.netty.handler.codec.http.HttpHeaders.getHost;
+
 import java.math.BigInteger;
 import java.net.InetSocketAddress;
+import java.util.Map.Entry;
 
 import org.hibernate.Query;
 import org.hibernate.SessionFactory;
+import org.wetty.httpserver.server.HttpWettyServerTrafficHandler;
 import org.wetty.httpserver.utils.HibernateUtil;
 
 import io.netty.channel.Channel;
+import io.netty.channel.ChannelHandler;
+import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.traffic.TrafficCounter;
 
 public class SimpleStatistics implements Statistics {
 	
 	private static final int MILISECONDS_IN_SECOND = 1000;
 	
-	public synchronized void writeCounterData(Channel channel, TrafficCounter trafficCounter, String url) {
+	public void writeCounterData(Channel channel, TrafficCounter trafficCounter, String url) {
 
 		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		
 		synchronized (sessionFactory) {
 			
-			double speed = 0;
-			long interval = trafficCounter.lastTime() - trafficCounter.lastCumulativeTime();
-			if (interval > 0) {
-				speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes())
-						/ interval * MILISECONDS_IN_SECOND;
-			} 
+			double speed = getSpeed(trafficCounter); 
 			
 			try {
 				sessionFactory.getCurrentSession().beginTransaction();
@@ -55,6 +56,17 @@ public class SimpleStatistics implements Statistics {
 				sessionFactory.getCurrentSession().close();
 			}
 		}
+	}
+
+	public double getSpeed(TrafficCounter trafficCounter) {
+		double speed = 0.0;
+		long interval = trafficCounter.lastTime() - trafficCounter.lastCumulativeTime();
+		
+		if (interval > 0) {
+			speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes())
+					/ interval * MILISECONDS_IN_SECOND;
+		} else return -1.0;
+		return speed;
 	}
 
 	@Override
@@ -98,6 +110,23 @@ public class SimpleStatistics implements Statistics {
 		finally {
 			sessionFactory.getCurrentSession().close();
 		}
+		}
+	}
+
+	@Override
+	public void setChannelParameters(Channel channel, Object msg) {
+		if (msg instanceof HttpRequest) {
+			HttpRequest request = (HttpRequest) msg;
+			for (Entry<String, ChannelHandler> handler: channel.pipeline()) {
+				if (handler.getValue() instanceof HttpWettyServerTrafficHandler) {
+	
+					HttpWettyServerTrafficHandler trafficHandler = (HttpWettyServerTrafficHandler) handler.getValue();
+					synchronized (trafficHandler) {
+						trafficHandler.setUrl(getHost(request, "unknown") + request.getUri());
+					}
+					break;
+				}
+			} 
 		}
 	}
 }

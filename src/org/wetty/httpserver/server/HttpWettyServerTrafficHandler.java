@@ -10,14 +10,15 @@ import io.netty.handler.traffic.TrafficCounter;
 
 public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler implements ChannelGatherable {
 
-	private volatile StringBuilder url = new StringBuilder();
+	private final StringBuilder url = new StringBuilder();
+	//traffic handler is in the same thread as a channel, so we do not need volatile modifier
 	
 	public StringBuilder getUrl() {
 		return url;
 	}
 
 	public void setUrl(String url) {
-		this.url = new StringBuilder();
+		this.url.setLength(0);
  		this.url.append(url);
 	}
 
@@ -63,11 +64,14 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		
 		synchronized (counter) {
 			if (channel.parent() instanceof HttpWettyServerChannel) {
-				((HttpWettyServerChannel) channel.parent()).getStatistics().gatherFromTrafficCounter(channel, counter, this.url.toString());
-			}		
+			
+			HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) channel.parent();
+			
+				if (serverChannel != null) {
+					serverChannel.getStatistics().gatherFromTrafficCounter(channel, counter, this.url.toString());
+				}	
+			}
 		}
-		
 	}
-
 
 }

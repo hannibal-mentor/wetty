@@ -24,4 +24,10 @@ public class NoStatistics implements Statistics {
 		
 	}
 
+	@Override
+	public void setChannelParameters(Channel channel, Object request) {
+		// Nope
+		
+	}
+
 }
