@@ -1,5 +1,4 @@
 Requirements:
-
 1. JRE 1.7+.
 2. JDK 1.7+ (only for building).
 3. Maven (only for building).
@@ -12,12 +11,13 @@ Examples:
 	- SimpleStatistics - store all stats in statistics db
 	- NoStatics - no stats at all
 	- NoSessionStatistics - store only active sessions stats
-3. SQLite is not very good at handling the concurrent io db file operations, because there is only one db file.
+3. SQLite is not very good at handling the concurrent io db file operations.
 So, all transactions run in syncronized mode to keep server alive.
-4. Nothing has been mentioned about speed measuring formula, so basic one is used:
-speed = ([cumulative channel session read bytes] + [cumulative channel session write bytes]) * 1000 / [cumulative channel session time, ms].
+4. Nothing has been mentioned about speed measuring formula, so, the basic one is used:
+speed = ([cumulative channel session read bytes] + [cumulative channel session written bytes]) * 1000 / [cumulative channel session time, ms].
 The speed is -1.0 in case [cumulative channel session time, sec] = 0.
 Speed measuring formula could be easily overriden in extended class.
+The longer the session, the more accurate statistics is.
 5. Automatic content compression is on for the service.
 6. The standard Netty ChannelTrafficShapingHandler extension is used for traffic measuring.
 7. No test are provided for building of the service.
@@ -31,4 +31,4 @@ Running:
 3. open browser and visit "http://localhost:9090/status" page.
 
 Shutting down server:
-- either press Ctrl+C from terminal session or kill the corresponding javaw.exe process from task manager
+- either press Ctrl+C from terminal session where the server process is running or kill the corresponding javaw.exe process from task manager
