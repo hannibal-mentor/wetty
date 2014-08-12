@@ -28,7 +28,7 @@ import org.wetty.httpserver.server.HttpWettyServer;
  */
 public final class HttpWettyClient {
 
-    static final String URL = System.getProperty("url", "http://127.0.0.1:8080/");
+    static final String URL = System.getProperty("url", "http://127.0.0.1:9090/status");
 
     public static void main(String[] args) throws Exception {
         URI uri = new URI(URL);

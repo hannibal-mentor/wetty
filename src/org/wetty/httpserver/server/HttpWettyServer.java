@@ -9,17 +9,18 @@ import org.hibernate.SessionFactory;
 import org.wetty.httpserver.controllers.ControllerManager;
 import org.wetty.httpserver.utils.HibernateUtil;
 import org.wetty.httpserver.utils.statistics.SimpleStatistics;
-import org.wetty.httpserver.utils.statistics.Statistics;
 import org.wetty.httpserver.views.HTMLViewBuilder;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.Channel;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
+import io.netty.channel.socket.nio.NioServerSocketChannel;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 import io.netty.handler.ssl.SslContext;
 import io.netty.handler.ssl.util.SelfSignedCertificate;
+import static org.wetty.httpserver.utils.Constants.Names.*;
 
 public class HttpWettyServer {
 
@@ -34,7 +35,7 @@ public class HttpWettyServer {
 		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		Session session = sessionFactory.getCurrentSession();
 		session.close();
-		
+
 		// Configure SSL.
 		final SslContext sslCtx;
 		if (SSL) {
@@ -50,17 +51,14 @@ public class HttpWettyServer {
 		try {
 			ServerBootstrap b = new ServerBootstrap();
 			b.group(bossGroup, workerGroup)
-			.channel(HttpWettyServerChannel.class)
+			.channel(NioServerSocketChannel.class)
 			.handler(new LoggingHandler(LogLevel.INFO))
+			.childAttr(STATISTICS_CLASS, SimpleStatistics.class)
+			.childAttr(CONTROLLERMANAGER_CLASS , ControllerManager.class)
+			.childAttr(VIEWBUILDER_CLASS , HTMLViewBuilder.class)
 			.childHandler(new HttpWettyServerInitializer(sslCtx, CHECKINTERVAL));
 
 			Channel ch = b.bind(PORT).sync().channel();
-
-			//Setting model, view, controller, statistics and request-response handler implementations
-			if (ch instanceof HttpWettyServerChannel) {
-				((HttpWettyServerChannel) ch).setStatistics((Statistics) new SimpleStatistics());
-				((HttpWettyServerChannel) ch).setControllerManager(new ControllerManager(new HTMLViewBuilder()));
-			}
 
 			System.err.println("Open your web browser and navigate to " +
 					(SSL? "https" : "http") + "://127.0.0.1:" + PORT + '/');
@@ -68,7 +66,7 @@ public class HttpWettyServer {
 			ch.closeFuture().sync();
 		} finally {
 			sessionFactory.close();
-			
+
 			bossGroup.shutdownGracefully();
 			workerGroup.shutdownGracefully();
 		}

@@ -1,5 +1,6 @@
 package org.wetty.httpserver.server;
 
+import org.wetty.httpserver.utils.AttributeClassSpawner;
 import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 
 import io.netty.channel.Channel;
@@ -63,14 +64,7 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		TrafficCounter counter = trafficCounter();
 		
 		synchronized (counter) {
-			if (channel.parent() instanceof HttpWettyServerChannel) {
-			
-			HttpWettyServerChannel serverChannel = (HttpWettyServerChannel) channel.parent();
-			
-				if (serverChannel != null) {
-					serverChannel.getStatistics().gatherFromTrafficCounter(channel, counter, this.url.toString());
-				}	
-			}
+			AttributeClassSpawner.createStatisticsClass(channel).gatherFromTrafficCounter(channel, counter, this.url.toString());
 		}
 	}
 

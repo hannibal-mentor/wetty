@@ -6,7 +6,8 @@ Requirements:
 
 Special sauce:
 1. Technologies used: Netty, Maven, SQLite, Hibernate.
-2. Change statistics algorithms by simply implementing Statistics inteface and intantiating appropriate class in the main() method of HttpWettyServer class.
+2. Change statistics algorithms by simply implementing Statistics inteface and intantiating appropriate class in the main() method of HttpWettyServer class,
+and change the attribute class mapping in Constants class.
 Examples: 
 	- SimpleStatistics - store all stats in statistics db
 	- NoStatics - no stats at all
