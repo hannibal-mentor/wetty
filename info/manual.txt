@@ -5,7 +5,7 @@ Requirements:
 4. JAVA_PATH should be set.
 
 Special sauce:
-1. Technologies used: Netty, Maven, SQLite, Hibernate.
+1. Technologies used: Netty, Maven, SQLite, Hibernate, JUnit, Mockito.
 2. Change statistics algorithms by simply implementing Statistics inteface and intantiating appropriate class in the main() method of HttpWettyServer class,
 and change the attribute class mapping in Constants class.
 Examples: 
@@ -21,9 +21,10 @@ Speed measuring formula could be easily overriden in extended class.
 The longer the session, the more accurate statistics is.
 5. Automatic content compression is on for the service.
 6. The standard Netty ChannelTrafficShapingHandler extension is used for traffic measuring.
-7. No test are provided for building of the service.
+7. A few tests are provided for building of the service.
+8. Web server port number and traffic counter check interval could be set using the corresponding system properties: port, check_interval.
 
-Building:
+Building and running tests:
 1. mvn clean install.
 
 Running:
