@@ -3,6 +3,9 @@ wetty
 
 A small web-server based on netty.io framework.
 
+v 0.1.3
+- added few tests, adder HTMLViewBuilder which outputs HTML
+
 v 0.1.2
 - tiny refactoring, speed measuring formula changed
 
