@@ -24,7 +24,7 @@ import static org.wetty.httpserver.utils.Constants.Names.*;
 
 public class HttpWettyServer {
 
-	private static final long CHECKINTERVAL = 1000;
+	private static final long CHECKINTERVAL = Integer.parseInt(System.getProperty("check_interval", "1000"));
 
 	static final boolean SSL = System.getProperty("ssl") != null;
 	static final int PORT = Integer.parseInt(System.getProperty("port", SSL? "9443" : "9090"));

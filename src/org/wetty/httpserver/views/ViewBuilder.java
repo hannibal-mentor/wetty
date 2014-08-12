@@ -6,9 +6,7 @@ import static io.netty.handler.codec.http.HttpHeaders.isKeepAlive;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONNECTION;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_LENGTH;
 import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
-import static io.netty.handler.codec.http.HttpHeaders.Names.COOKIE;
 import static io.netty.handler.codec.http.HttpHeaders.Names.LOCATION;
-import static io.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
 import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
@@ -21,8 +19,6 @@ import io.netty.channel.Channel;
 import io.netty.channel.ChannelFutureListener;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.handler.codec.DecoderResult;
-import io.netty.handler.codec.http.Cookie;
-import io.netty.handler.codec.http.CookieDecoder;
 import io.netty.handler.codec.http.DefaultFullHttpResponse;
 import io.netty.handler.codec.http.FullHttpResponse;
 import io.netty.handler.codec.http.HttpContent;
@@ -31,12 +27,10 @@ import io.netty.handler.codec.http.HttpObject;
 import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.codec.http.LastHttpContent;
 import io.netty.handler.codec.http.QueryStringDecoder;
-import io.netty.handler.codec.http.ServerCookieEncoder;
 import io.netty.util.CharsetUtil;
 
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.Map.Entry;
 
 import org.wetty.httpserver.utils.AttributeClassSpawner;
@@ -55,11 +49,15 @@ public class ViewBuilder {
 		this.request = request;
 	}
 
+	public HttpRequest getRequest() {
+		return request;
+	}
+
 	//default page
 	public Object def(Object msg) {
-			return "DEFAULT PAGE VIEW";
+		return "DEFAULT PAGE VIEW";
 	}
-	
+
 	//404 page
 	public Object error404(ChannelHandlerContext ctx, Object msg) {
 		send404(ctx);
@@ -90,10 +88,10 @@ public class ViewBuilder {
 	//page for /redirect request
 	public Object processRedirect(ChannelHandlerContext ctx, Object msg) {
 		StringBuilder redirect = new StringBuilder(); 
-		
+
 		String url = request.getUri();
 		QueryStringDecoder queryStringDecoder = new QueryStringDecoder(url);
-		
+
 		Map<String, List<String>> params = queryStringDecoder.parameters();
 		if (!params.isEmpty()) {
 			for (Entry<String, List<String>> p: params.entrySet()) {
@@ -138,7 +136,7 @@ public class ViewBuilder {
 			buf.append("REQUEST_URI: ").append(request.getUri()).append("\r\n\r\n");
 
 			StatisticsReader sr = new StatisticsReader();
-			appendOneColumnSection(buf, sr.getAllRequests(), "TOTAL REQUESTS: ", new String[]{"#", "url", "number"});
+			appendOneColumnSection(buf, sr.getAllRequests(), "TOTAL REQUESTS: ");
 
 			appendSection(buf, sr.getRedirects(), "REDIRECTS:", new String[]{"#", "url", "number"});
 			appendSection(buf, sr.getUniqueRequestsGroupedByIP(), "UNIQUE REQUESTS BY ID:", new String[]{"#", "IP", "number"});
@@ -170,7 +168,7 @@ public class ViewBuilder {
 		buf.append("\r\n");
 	}
 
-	public void appendOneColumnSection(StringBuilder buf, List<Object> collection, String header, String [] firstRow) {
+	public void appendOneColumnSection(StringBuilder buf, List<Object> collection, String header) {
 
 		for (Object obj: collection) {
 			buf.append(header).append(obj.toString()).append("\r\n\r\n");
@@ -229,7 +227,7 @@ public class ViewBuilder {
 		buf.append("\r\n");
 	}
 
-	private boolean writeResponse(StringBuilder buf, HttpObject currentObj, ChannelHandlerContext ctx) {
+	protected boolean writeResponse(StringBuilder buf, HttpObject currentObj, ChannelHandlerContext ctx) {
 		// Decide whether to close the connection or not.
 		boolean keepAlive = isKeepAlive(request);
 
@@ -255,22 +253,6 @@ public class ViewBuilder {
 			// Add keep alive header as per:
 			// - http://www.w3.org/Protocols/HTTP/1.1/draft-ietf-http-v11-spec-01.html#Connection
 			response.headers().set(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
-		}
-
-		// Encode the cookie.
-		String cookieString = request.headers().get(COOKIE);
-		if (cookieString != null) {
-			Set<Cookie> cookies = CookieDecoder.decode(cookieString);
-			if (!cookies.isEmpty()) {
-				// Reset the cookies if necessary.
-				for (Cookie cookie: cookies) {
-					response.headers().add(SET_COOKIE, ServerCookieEncoder.encode(cookie));
-				}
-			}
-		} else {
-			// Browser sent no cookie.  Add some.
-			response.headers().add(SET_COOKIE, ServerCookieEncoder.encode("key1", "value1"));
-			response.headers().add(SET_COOKIE, ServerCookieEncoder.encode("key2", "value2"));
 		}
 	}
 

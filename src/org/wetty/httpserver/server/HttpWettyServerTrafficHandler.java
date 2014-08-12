@@ -5,7 +5,6 @@ import org.wetty.httpserver.utils.statistics.ChannelGatherable;
 
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
-import io.netty.channel.ChannelPromise;
 import io.netty.handler.traffic.ChannelTrafficShapingHandler;
 import io.netty.handler.traffic.TrafficCounter;
 
@@ -18,7 +17,12 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 		return url;
 	}
 
-	public void setUrl(String url) {
+	public void setUrlAndGather(String url, Channel channel) {
+		if (this.url.length() > 0 && !this.url.equals(url)) {
+			//reset and gather
+			gatherStatistics(channel);
+		}
+		
 		this.url.setLength(0);
  		this.url.append(url);
 	}
@@ -31,17 +35,8 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 	}
 
 	@Override
-	public void write(ChannelHandlerContext ctx, Object msg,
-			ChannelPromise promise) throws Exception {
-
-		super.write(ctx, msg, promise);	
-		//System.out.println("WRITE: "+ ctx.channel() + tcInfo());
-	}
-
-	@Override
 	protected void doAccounting(TrafficCounter counter) {
 		super.doAccounting(counter); //NOOP
-
 	}
 
 	public HttpWettyServerTrafficHandler(long checkInterval) {
@@ -49,23 +44,8 @@ public class HttpWettyServerTrafficHandler extends ChannelTrafficShapingHandler 
 	}
 
 	@Override
-	public void read(ChannelHandlerContext ctx) {
-		super.read(ctx);
-		//System.out.println("READ: "+ ctx.channel() + tcInfo());
-	}
-
-	@Override
-	public TrafficCounter trafficCounter() {
-		return super.trafficCounter();	
-	}
-
-	@Override
 	public void gatherStatistics(Channel channel) {
-		TrafficCounter counter = trafficCounter();
-		
-		synchronized (counter) {
-			AttributeClassSpawner.createStatisticsClass(channel).gatherFromTrafficCounter(channel, counter, this.url.toString());
-		}
+		AttributeClassSpawner.createStatisticsClass(channel).gatherFromTrafficCounter(channel, trafficCounter(), this.url.toString());
 	}
 
 }

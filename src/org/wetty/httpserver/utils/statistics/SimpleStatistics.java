@@ -22,56 +22,75 @@ import io.netty.handler.codec.http.HttpRequest;
 import io.netty.handler.traffic.TrafficCounter;
 
 public class SimpleStatistics implements Statistics {
-	
+
+	private final StringBuilder urlBuf = new StringBuilder();
+
 	private static final int MILISECONDS_IN_SECOND = 1000;
-	
+
 	public void writeCounterData(Channel channel, TrafficCounter trafficCounter, String url) {
 
 		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
-		
+
 		synchronized (sessionFactory) {
+
+			double speed = 0.0;
+			BigInteger read = BigInteger.valueOf(0);
+			BigInteger write = BigInteger.valueOf(0);
 			
-			double speed = getSpeed(trafficCounter); 
-			
-			try {
-				sessionFactory.getCurrentSession().beginTransaction();
-	
-				Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Requests (uri, src_ip, sent_bytes, received_bytes, speed) VALUES (?,?,?,?,?);")
-						.setString(0, url)
-						.setString(1, ((InetSocketAddress)channel.remoteAddress()).getAddress().getHostAddress().toString())
-						.setBigInteger(2, BigInteger.valueOf(trafficCounter.cumulativeReadBytes()))
-						.setBigInteger(3, BigInteger.valueOf(trafficCounter.cumulativeWrittenBytes()))
-						.setDouble(4,  speed);
-	
-						@SuppressWarnings("unused")
-						int result = query.executeUpdate();
-						sessionFactory.getCurrentSession().getTransaction().commit();
+			synchronized (trafficCounter) {
+				speed = getSpeed(trafficCounter); 
+				read = BigInteger.valueOf(trafficCounter.cumulativeReadBytes());
+				write = BigInteger.valueOf(trafficCounter.cumulativeWrittenBytes());
+				trafficCounter.resetCumulativeTime();
 			}
-			catch (RuntimeException e) {
-				sessionFactory.getCurrentSession().getTransaction().rollback();
-				System.out.println("Problem writing stats");
-				throw e; // or display error message
+
+				try {
+					sessionFactory.getCurrentSession().beginTransaction();
+
+					Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Requests (uri, src_ip, sent_bytes, received_bytes, speed) VALUES (?,?,?,?,?);")
+							.setString(0, url)
+							.setString(1, ((InetSocketAddress)channel.remoteAddress()).getAddress().getHostAddress().toString())
+							.setBigInteger(2, read)
+							.setBigInteger(3, write)
+							.setDouble(4,  speed);
+
+					@SuppressWarnings("unused")
+					int result = query.executeUpdate();
+					sessionFactory.getCurrentSession().getTransaction().commit();
+				}
+
+				catch (RuntimeException e) {
+					sessionFactory.getCurrentSession().getTransaction().rollback();
+					System.out.println("Problem writing stats");
+					throw e; // or display error message
+				}
+				finally {
+					sessionFactory.getCurrentSession().close();
+				}
 			}
-			finally {
-				sessionFactory.getCurrentSession().close();
-			}
-		}
 	}
 
-	public double getSpeed(TrafficCounter trafficCounter) {
+	public synchronized double getSpeed(TrafficCounter trafficCounter) {
 		double speed = 0.0;
-		long interval = trafficCounter.lastTime() - trafficCounter.lastCumulativeTime();
-		
-		if (interval > 0) {
-			speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes())
-					/ interval * MILISECONDS_IN_SECOND;
-		} else return -1.0;
+
+		synchronized (trafficCounter) {
+
+			long interval = trafficCounter.lastTime() - trafficCounter.lastCumulativeTime();
+
+			if (interval > 0) {
+				speed = (trafficCounter.cumulativeReadBytes() + trafficCounter.cumulativeWrittenBytes()) 
+						* MILISECONDS_IN_SECOND	/ interval;
+			} else return -1.0;
+		}
+
 		return speed;
 	}
 
 	@Override
 	public void gatherFromTrafficCounter(Channel channel, TrafficCounter trafficCounter, String url) {
+		synchronized (trafficCounter) {
 			writeCounterData(channel, trafficCounter, url);
+		}
 	}
 
 	@Override
@@ -92,24 +111,24 @@ public class SimpleStatistics implements Statistics {
 
 		SessionFactory sessionFactory = HibernateUtil.getSessionFactory();
 		synchronized (sessionFactory) {
-		try {
-			sessionFactory.getCurrentSession().beginTransaction();
+			try {
+				sessionFactory.getCurrentSession().beginTransaction();
 
-			Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Redirects (url) VALUES (?);")
-					.setString(0, url);
+				Query query = sessionFactory.getCurrentSession().createSQLQuery("INSERT INTO Redirects (url) VALUES (?);")
+						.setString(0, url);
 
-			@SuppressWarnings("unused")
-			int result = query.executeUpdate();
-			sessionFactory.getCurrentSession().getTransaction().commit();
-		}
-		catch (RuntimeException e) {
-			sessionFactory.getCurrentSession().getTransaction().rollback();
-			System.out.println("Problem writing stats");
-			throw e; // or display error message
-		}
-		finally {
-			sessionFactory.getCurrentSession().close();
-		}
+				@SuppressWarnings("unused")
+				int result = query.executeUpdate();
+				sessionFactory.getCurrentSession().getTransaction().commit();
+			}
+			catch (RuntimeException e) {
+				sessionFactory.getCurrentSession().getTransaction().rollback();
+				System.out.println("Problem writing stats");
+				throw e; // or display error message
+			}
+			finally {
+				sessionFactory.getCurrentSession().close();
+			}
 		}
 	}
 
@@ -119,11 +138,12 @@ public class SimpleStatistics implements Statistics {
 			HttpRequest request = (HttpRequest) msg;
 			for (Entry<String, ChannelHandler> handler: channel.pipeline()) {
 				if (handler.getValue() instanceof HttpWettyServerTrafficHandler) {
-	
+
 					HttpWettyServerTrafficHandler trafficHandler = (HttpWettyServerTrafficHandler) handler.getValue();
-					synchronized (trafficHandler) {
-						trafficHandler.setUrl(getHost(request, "unknown") + request.getUri());
-					}
+
+					urlBuf.setLength(0);
+					trafficHandler.setUrlAndGather(urlBuf.append(getHost(request, "unknown")).append(request.getUri()).toString(), channel);
+
 					break;
 				}
 			} 
