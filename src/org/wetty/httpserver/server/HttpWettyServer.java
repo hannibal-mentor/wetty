@@ -46,7 +46,7 @@ public class HttpWettyServer {
 		}
 
 		// Configure the server.
-		EventLoopGroup bossGroup = new NioEventLoopGroup(100);
+		EventLoopGroup bossGroup = new NioEventLoopGroup(10);
 		EventLoopGroup workerGroup = new NioEventLoopGroup();
 		try {
 			ServerBootstrap b = new ServerBootstrap();

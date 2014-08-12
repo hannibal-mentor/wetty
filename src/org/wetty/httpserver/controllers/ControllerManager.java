@@ -67,15 +67,13 @@ public class ControllerManager {
 			case "/status": 
 				return viewBuilder.processStatus(ctx, msg);
 			default:
-				return viewBuilder.error404(ctx, msg);
+				return viewBuilder.def(msg);
 			}
-
 		}	
 		else {
 			//if not HttpRequest
 			return viewBuilder.def(msg);
 		}
 	}
-
 
 }

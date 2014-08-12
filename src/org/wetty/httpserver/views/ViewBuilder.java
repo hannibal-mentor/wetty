@@ -9,6 +9,7 @@ import static io.netty.handler.codec.http.HttpHeaders.Names.CONTENT_TYPE;
 import static io.netty.handler.codec.http.HttpHeaders.Names.COOKIE;
 import static io.netty.handler.codec.http.HttpHeaders.Names.LOCATION;
 import static io.netty.handler.codec.http.HttpHeaders.Names.SET_COOKIE;
+import static io.netty.handler.codec.http.HttpResponseStatus.NOT_FOUND;
 import static io.netty.handler.codec.http.HttpResponseStatus.BAD_REQUEST;
 import static io.netty.handler.codec.http.HttpResponseStatus.CONTINUE;
 import static io.netty.handler.codec.http.HttpResponseStatus.MOVED_PERMANENTLY;
@@ -71,12 +72,10 @@ public class ViewBuilder {
 			send100(ctx);
 		}
 		if (msg instanceof HttpRequest) {
-			//HttpRequest request = ((HttpRequest) msg);
 
 			try {
 				Thread.sleep(10000);
 			} catch (InterruptedException e) {
-				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
 
@@ -276,7 +275,7 @@ public class ViewBuilder {
 	}
 
 	public static void send404(ChannelHandlerContext ctx) {
-		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, BAD_REQUEST);
+		FullHttpResponse response = new DefaultFullHttpResponse(HTTP_1_1, NOT_FOUND);
 		ctx.write(response);
 	}
 
